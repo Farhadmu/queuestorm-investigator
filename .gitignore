@@ -18,3 +18,5 @@ Thumbs.db
 # Task materials
 tasks/
 
+# Editor settings
+.puku/
