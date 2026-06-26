@@ -288,20 +288,18 @@
             gap: 0.5rem;
         }
 
+        /* Table Responsive Layout */
         .table-container {
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            overflow-x: auto;
             background: rgba(17, 24, 39, 0.3);
             width: 100%;
-            -webkit-overflow-scrolling: touch;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.85rem;
-            min-width: 650px; /* Forces scrollbar instead of squeezing inputs on narrow viewports */
         }
 
         th, td {
@@ -314,6 +312,23 @@
             background: rgba(31, 41, 55, 0.8);
             color: var(--text-secondary);
             font-weight: 600;
+        }
+
+        /* Table Inputs Styling */
+        #txn-table input, #txn-table select {
+            width: 100%;
+            padding: 0.4rem 0.6rem;
+            background: rgba(31, 41, 55, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            outline: none;
+            font-size: 0.85rem;
+            transition: all 0.2s ease;
+        }
+
+        #txn-table input:focus, #txn-table select:focus {
+            border-color: var(--accent-primary);
         }
 
         .btn {
@@ -526,6 +541,63 @@
                 padding: 1.25rem;
                 border-radius: 12px;
                 gap: 1.25rem;
+            }
+
+            /* Responsive Table Card Layout (NO horizontal scroll) */
+            #txn-table thead {
+                display: none; /* Hide header columns */
+            }
+
+            #txn-table, #txn-table tbody, #txn-table tr, #txn-table td {
+                display: block;
+                width: 100% !important;
+                min-width: 0 !important;
+            }
+
+            #txn-table tr {
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+                padding: 1rem;
+                margin-bottom: 1.25rem;
+                background: rgba(31, 41, 55, 0.25);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            }
+
+            #txn-table td {
+                border: none;
+                padding: 0.4rem 0;
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            #txn-table td::before {
+                content: attr(data-label);
+                display: block;
+                font-size: 0.75rem;
+                color: var(--text-secondary);
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            #txn-table td[data-label="Actions"] {
+                display: flex;
+                flex-direction: row;
+                justify-content: flex-end;
+                padding-top: 0.75rem;
+                border-top: 1px solid var(--border-color);
+                margin-top: 0.5rem;
+            }
+
+            #txn-table td[data-label="Actions"]::before {
+                display: none;
+            }
+
+            #txn-table td[data-label="Actions"] button {
+                width: 100%;
+                justify-content: center;
+                padding: 0.5rem;
             }
 
             .result-grid {
@@ -907,9 +979,9 @@
             const tr = document.createElement("tr");
             
             tr.innerHTML = `
-                <td><input type="text" value="${data.transaction_id || ''}" style="width: 100%; padding: 4px 8px;"></td>
-                <td>
-                    <select style="width: 100%; padding: 4px 8px;">
+                <td data-label="Txn ID"><input type="text" value="${data.transaction_id || ''}"></td>
+                <td data-label="Type">
+                    <select>
                         <option value="transfer" ${data.type === 'transfer' ? 'selected' : ''}>transfer</option>
                         <option value="payment" ${data.type === 'payment' ? 'selected' : ''}>payment</option>
                         <option value="cash_in" ${data.type === 'cash_in' ? 'selected' : ''}>cash_in</option>
@@ -918,18 +990,18 @@
                         <option value="refund" ${data.type === 'refund' ? 'selected' : ''}>refund</option>
                     </select>
                 </td>
-                <td><input type="number" value="${data.amount || ''}" style="width: 100%; padding: 4px 8px;"></td>
-                <td><input type="text" value="${data.counterparty || ''}" style="width: 100%; padding: 4px 8px;"></td>
-                <td>
-                    <select style="width: 100%; padding: 4px 8px;">
+                <td data-label="Amount (BDT)"><input type="number" value="${data.amount || ''}"></td>
+                <td data-label="Counterparty"><input type="text" value="${data.counterparty || ''}"></td>
+                <td data-label="Status">
+                    <select>
                         <option value="completed" ${data.status === 'completed' ? 'selected' : ''}>completed</option>
                         <option value="failed" ${data.status === 'failed' ? 'selected' : ''}>failed</option>
                         <option value="pending" ${data.status === 'pending' ? 'selected' : ''}>pending</option>
                         <option value="reversed" ${data.status === 'reversed' ? 'selected' : ''}>reversed</option>
                     </select>
                 </td>
-                <td>
-                    <button class="btn btn-secondary" onclick="this.closest('tr').remove()" style="padding: 2px 8px; background: rgba(239, 68, 68, 0.2); border: none; color: #ef4444;"><i class="fa-solid fa-trash"></i></button>
+                <td data-label="Actions">
+                    <button class="btn btn-secondary" onclick="this.closest('tr').remove()" style="padding: 6px 12px; background: rgba(239, 68, 68, 0.2); border: none; color: #ef4444;"><i class="fa-solid fa-trash"></i> Delete</button>
                 </td>
             `;
             tbody.appendChild(tr);
