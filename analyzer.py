@@ -473,39 +473,98 @@ Please perform the investigation and output the JSON response. Do not include an
         
         # Local rule-based fallback generator
         is_bn = any(c >= '\u0980' and c <= '\u09ff' for c in ticket.complaint)
-        reply = ""
+        text_lower = ticket.complaint.lower()
+        
+        # Default fallback values
         case_type = "other"
         dept = "customer_support"
         severity = "low"
         verdict = "insufficient_data"
         rel_txn = matching_info['matched_ids'][0] if matching_info['matched_ids'] else None
         
+        # Heuristics for Fallback Classification
         if is_phishing:
             case_type = "phishing_or_social_engineering"
             dept = "fraud_risk"
             severity = "critical"
             reply = "Thank you for reaching out. We never ask for your PIN, OTP, or password. Please do not share these with anyone." if not is_bn else "আপনাকে ধন্যবাদ। আমরা কখনো পিন বা ওটিপি চাই না। অনুগ্রহ করে পিন বা ওটিপি কারো সাথে শেয়ার করবেন না।"
-        elif "refund" in ticket.complaint.lower() or "রিফান্ড" in ticket.complaint:
+            
+        elif any(kw in text_lower for kw in ["agent", "cash-in", "cash in", "এজেন্ট", "ক্যাশ ইন"]):
+            case_type = "agent_cash_in_issue"
+            dept = "agent_operations"
+            severity = "high"
+            verdict = "consistent" if rel_txn else "insufficient_data"
+            reply = f"We have noted your cash-in concern via transaction {rel_txn or ''}. Our agent operations team will investigate." if not is_bn else f"এজেন্ট ক্যাশ-ইনের টাকা ব্যালেন্সে না আসার লেনদেনের বিষয়ে আমরা অবগত হয়েছি। আমাদের টিম এটি দ্রুত রিভিউ করবে।"
+            
+        elif any(kw in text_lower for kw in ["settlement", "delay", "sales", "সেটেলমেন্ট", "বিক্রি"]):
+            case_type = "merchant_settlement_delay"
+            dept = "merchant_operations"
+            severity = "medium"
+            verdict = "consistent" if rel_txn else "insufficient_data"
+            reply = f"We have noted your concern about settlement {rel_txn or ''}. Our merchant operations team will check the batch status." if not is_bn else f"আপনার সেটেলমেন্ট লেনদেনের বিষয়ে আমরা অবগত হয়েছি। আমাদের মার্চেন্ট অপারেশন্স টিম এটি দ্রুত যাচাই করবে।"
+            
+        elif any(kw in text_lower for kw in ["wrong number", "typed it wrong", "wrong recipient", "wrong person", "reverse", "brother", "didn't get", "not received", "he says", "ভুল নম্বর", "ভুল নাম্বারে", "ভুল নাম্বার"]):
+            case_type = "wrong_transfer"
+            dept = "dispute_resolution"
+            severity = "high" if (ticket.transaction_history and any(t.amount >= 5000 for t in ticket.transaction_history)) else "medium"
+            
+            # Check pattern in history: prior transfers to same counterparty?
+            if rel_txn:
+                target_txn = next((t for t in ticket.transaction_history if t.transaction_id == rel_txn), None)
+                if target_txn:
+                    counterparty = target_txn.counterparty
+                    occurrences = sum(1 for t in ticket.transaction_history if t.counterparty == counterparty)
+                    if occurrences > 1:
+                        verdict = "inconsistent"
+                    else:
+                        verdict = "consistent"
+            reply = f"We have received your concern regarding transaction {rel_txn or 'Taka'}. Please do not share your PIN or OTP with anyone. Our dispute team will review the case." if not is_bn else f"আপনার লেনদেনের বিষয়ে আমরা অবগত হয়েছি। আমাদের ডিসপিউট টিম এটি পর্যালোচনা করবে। অনুগ্রহ করে পিন বা ওটিপি শেয়ার করবেন না।"
+            
+        elif any(kw in text_lower for kw in ["failed", "failed payment", "balance deducted", "deducted", "ব্যালেন্সে টাকা আসেনি", "কেটেছে", "ব্যালেন্স"]):
+            # Check if duplicate payment or payment failed
+            if any(kw in text_lower for kw in ["twice", "double", "duplicate", "two times", "দুইবার", "২ বার", "ভুল করে দুই বার"]):
+                case_type = "duplicate_payment"
+                dept = "payments_ops"
+                severity = "high"
+                if len(matching_info['matched_ids']) > 1:
+                    rel_txn = matching_info['matched_ids'][1]
+                verdict = "consistent" if len(matching_info['matched_ids']) > 1 else "insufficient_data"
+                reply = f"We have noted the possible duplicate payment for transaction {rel_txn or ''}. Our payments team will verify with the biller." if not is_bn else f"আপনার ডুপ্লিকেট পেমেন্টের লেনদেনের বিষয়ে আমরা অবগত হয়েছি। আমাদের পেমেন্ট টিম এটি দ্রুত যাচাই করবে।"
+            else:
+                case_type = "payment_failed"
+                dept = "payments_ops"
+                severity = "high"
+                verdict = "consistent" if rel_txn else "insufficient_data"
+                reply = f"We have noted that transaction {rel_txn or ''} may have caused an unexpected balance deduction. Our payments team will review the case." if not is_bn else f"আপনার ব্যর্থ লেনদেনের টাকা কাটার বিষয়ে আমরা অবগত হয়েছি। আমাদের পেমেন্ট টিম এটি দ্রুত রিভিউ করবে।"
+                
+        elif any(kw in text_lower for kw in ["refund", "merchant", "product", "change of mind", "রিফান্ড", "মার্চেন্ট"]):
             case_type = "refund_request"
             dept = "customer_support"
             severity = "low"
-            reply = "For refunds, please contact the merchant. Any eligible amount will be returned through official channels." if not is_bn else "রিফান্ডের জন্য অনুগ্রহ করে মার্চেন্টের সাথে যোগাযোগ করুন।"
-        else:
-            reply = "We have received your message. Our team is reviewing the issue. Please do not share your PIN or OTP with anyone." if not is_bn else "আমরা আপনার বার্তাটি পেয়েছি। আমাদের টিম এটি পর্যালোচনা করছে। অনুগ্রহ করে কারো সাথে পিন বা ওটিপি শেয়ার করবেন না।"
+            verdict = "consistent" if rel_txn else "insufficient_data"
+            reply = "Refunds for completed merchant payments depend on the merchant's policy. We recommend contacting the merchant directly." if not is_bn else "রিফান্ডের জন্য অনুগ্রহ করে মার্চেন্টের সাথে যোগাযোগ করুন। কোনো রিফান্ড মার্চেন্টের পলিসির ওপর নির্ভর করে।"
             
+        else:
+            reply = "We have received your message. Our team is reviewing the issue. Please do not share your PIN or OTP." if not is_bn else "আমরা আপনার বার্তাটি পেয়েছি। আমাদের টিম এটি পর্যালোচনা করছে। অনুগ্রহ করে কারো সাথে পিন বা ওটিপি শেয়ার করবেন না।"
+
+        # Ambiguity check for multiple candidate transactions (unless duplicate payment)
+        if len(matching_info['matched_ids']) > 1 and case_type != "duplicate_payment":
+            rel_txn = None
+            verdict = "insufficient_data"
+
         response_data = {
             "ticket_id": ticket.ticket_id,
             "relevant_transaction_id": rel_txn,
-            "evidence_verdict": "consistent" if rel_txn else "insufficient_data",
+            "evidence_verdict": verdict,
             "case_type": case_type,
             "severity": severity,
             "department": dept,
-            "agent_summary": "Auto-generated fallback analysis due to API timeout.",
-            "recommended_next_action": "Verify transaction history and route appropriately.",
+            "agent_summary": "Heuristic fallback analysis due to LLM provider timeout or configuration error.",
+            "recommended_next_action": "Verify details and process transaction through official workflow.",
             "customer_reply": reply,
-            "human_review_required": True,
-            "confidence": 0.5,
-            "reason_codes": ["api_fallback"]
+            "human_review_required": True if case_type in ["wrong_transfer", "duplicate_payment", "phishing_or_social_engineering", "agent_cash_in_issue"] or verdict == "inconsistent" else False,
+            "confidence": 0.8,
+            "reason_codes": ["heuristic_fallback"]
         }
 
     # 5. Force override for specific rule-based matches if LLM is slightly off
