@@ -104,6 +104,98 @@
             border: 1px solid rgba(16, 185, 129, 0.2);
         }
 
+        .logout-btn {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            color: var(--danger);
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        /* Login Container Styling */
+        .login-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            padding: 2rem;
+        }
+
+        .login-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 440px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 15px 40px 0 rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .login-header {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .login-header i {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #818cf8, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-header h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+
+        .login-header p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .demo-credentials-box {
+            background: rgba(79, 70, 229, 0.08);
+            border: 1px dashed rgba(79, 70, 229, 0.3);
+            border-radius: 10px;
+            padding: 1rem;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .demo-credentials-box strong {
+            color: #818cf8;
+        }
+
+        .error-message {
+            color: var(--danger);
+            background: var(--danger-bg);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        /* Main Dashboard Layout */
         .main-container {
             display: grid;
             grid-template-columns: 1.1fr 1fr;
@@ -377,12 +469,6 @@
             100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; }
         }
 
-        .action-bar {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
         .hidden {
             display: none !important;
         }
@@ -409,10 +495,50 @@
                 <i class="fa-solid fa-circle-check"></i>
                 Service Online
             </span>
+            <button class="logout-btn hidden" id="logout-btn" onclick="logout()">
+                <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+            </button>
         </div>
     </header>
 
-    <main class="main-container">
+    <!-- Login View -->
+    <div class="login-wrapper" id="login-view">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fa-solid fa-user-shield"></i>
+                <h2>Investigator Portal</h2>
+                <p>Authenticate to access the playground dashboard</p>
+            </div>
+            
+            <div class="demo-credentials-box">
+                <i class="fa-solid fa-circle-info" style="color: #818cf8; margin-right: 0.25rem;"></i>
+                <strong>Demo Credentials for Judges:</strong><br>
+                Username: <code>judge</code><br>
+                Password: <code>cse-carnival-2026</code>
+            </div>
+
+            <div class="error-message hidden" id="login-error">
+                Invalid username or password. Please try again.
+            </div>
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" placeholder="Enter username" value="judge">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter password" value="cse-carnival-2026">
+            </div>
+
+            <button type="button" class="btn" onclick="login()">
+                <i class="fa-solid fa-lock-open"></i> Authenticate
+            </button>
+        </div>
+    </div>
+
+    <!-- Dashboard View (Protected) -->
+    <main class="main-container hidden" id="dashboard-view">
         <!-- Input Panel -->
         <div class="glass-panel">
             <div class="panel-title">
@@ -574,6 +700,55 @@
 
     <!-- Public Case Data -->
     <script>
+        // Authentication Checking
+        document.addEventListener("DOMContentLoaded", () => {
+            checkAuth();
+        });
+
+        function checkAuth() {
+            const isAuth = localStorage.getItem("queuestorm_auth") === "true";
+            const loginView = document.getElementById("login-view");
+            const dashboardView = document.getElementById("dashboard-view");
+            const logoutBtn = document.getElementById("logout-btn");
+            const errorMsg = document.getElementById("login-error");
+
+            if (isAuth) {
+                loginView.classList.add("hidden");
+                dashboardView.classList.remove("hidden");
+                logoutBtn.classList.remove("hidden");
+                // Pre-populate with Case 1
+                if (document.getElementById("txn-body").children.length === 0) {
+                    document.getElementById("sample-select").value = "SAMPLE-01";
+                    loadSampleCase();
+                }
+            } else {
+                loginView.classList.remove("hidden");
+                dashboardView.classList.add("hidden");
+                logoutBtn.classList.add("hidden");
+                errorMsg.classList.add("hidden");
+            }
+        }
+
+        function login() {
+            const usernameInput = document.getElementById("username").value;
+            const passwordInput = document.getElementById("password").value;
+            const errorMsg = document.getElementById("login-error");
+
+            // Simple demo validation (Username: judge, Password: cse-carnival-2026)
+            if (usernameInput === "judge" && passwordInput === "cse-carnival-2026") {
+                localStorage.setItem("queuestorm_auth", "true");
+                errorMsg.classList.add("hidden");
+                checkAuth();
+            } else {
+                errorMsg.classList.remove("hidden");
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem("queuestorm_auth");
+            checkAuth();
+        }
+
         const sampleCases = {
             "SAMPLE-01": {
                 ticket_id: "TKT-001",
@@ -727,7 +902,6 @@
             const userType = document.getElementById("user-type").value;
             const complaint = document.getElementById("complaint").value;
             
-            // Build transactions list from table
             const txnRows = document.getElementById("txn-body").querySelectorAll("tr");
             const transaction_history = [];
             
@@ -740,7 +914,7 @@
                         amount: parseFloat(inputs[2].value) || 0,
                         counterparty: inputs[3].value,
                         status: inputs[4].value,
-                        timestamp: new Date().toISOString() // auto filler
+                        timestamp: new Date().toISOString()
                     });
                 }
             });
@@ -768,7 +942,7 @@
                 const data = await response.json();
                 displayResults(data);
             } catch (err) {
-                alert(`Error runnning investigation: ${err.message}`);
+                alert(`Error running investigation: ${err.message}`);
                 placeholder.classList.remove("hidden");
             } finally {
                 spinner.classList.add("hidden");
@@ -779,16 +953,13 @@
         function displayResults(data) {
             document.getElementById("results-content").classList.remove("hidden");
             
-            // Badge verdict mapping
             const verdictEl = document.getElementById("res-verdict");
             verdictEl.innerHTML = `<span class="badge badge-${data.evidence_verdict}">${data.evidence_verdict.replace('_', ' ')}</span>`;
             
-            // Text values
             document.getElementById("res-casetype").innerText = data.case_type.replace(/_/g, ' ');
             document.getElementById("res-dept").innerText = data.department.replace(/_/g, ' ');
             document.getElementById("res-txnid").innerText = data.relevant_transaction_id || "null (No match)";
             
-            // Severity badge
             const severityEl = document.getElementById("res-severity");
             severityEl.innerHTML = `<span class="badge badge-${data.severity}">${data.severity}</span>`;
             
@@ -796,17 +967,11 @@
             document.getElementById("res-action").innerText = data.recommended_next_action;
             document.getElementById("res-reply").innerText = data.customer_reply;
             
-            // JSON display
             document.getElementById("res-json").innerText = JSON.stringify(data, null, 2);
             
-            // Safety audits (always PASS due to safety sanitizer guardrail)
             document.getElementById("g-credentials").className = "fa-solid fa-circle-check";
             document.getElementById("g-refund").className = "fa-solid fa-circle-check";
         }
-
-        // Initialize with first case
-        document.getElementById("sample-select").value = "SAMPLE-01";
-        loadSampleCase();
     </script>
 </body>
 </html>
