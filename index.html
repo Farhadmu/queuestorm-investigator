@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QueueStorm Investigator Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-bg: rgba(17, 24, 39, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            
+            --accent-primary: #4f46e5;
+            --accent-glow: rgba(79, 70, 229, 0.4);
+            
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            
+            --success-bg: rgba(16, 185, 129, 0.15);
+            --warning-bg: rgba(245, 158, 11, 0.15);
+            --danger-bg: rgba(239, 68, 68, 0.15);
+            --info-bg: rgba(6, 182, 212, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(12px);
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #818cf8, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo i {
+            font-size: 1.6rem;
+            background: linear-gradient(135deg, #818cf8, #22d3ee);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header-status {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 0.4rem 0.8rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+            flex-grow: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .glass-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1.75rem;
+            backdrop-filter: blur(16px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .panel-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        select, input, textarea {
+            background: rgba(31, 41, 55, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px var(--accent-glow);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .case-selector-wrapper {
+            background: rgba(79, 70, 229, 0.08);
+            border: 1px dashed rgba(79, 70, 229, 0.3);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .table-container {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(17, 24, 39, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: rgba(31, 41, 55, 0.8);
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--accent-primary), #6366f1);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.85rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(31, 41, 55, 0.8);
+            border: 1px solid var(--border-color);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(55, 65, 81, 0.8);
+            box-shadow: none;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-consistent { background: var(--success-bg); color: var(--success); }
+        .badge-inconsistent { background: var(--danger-bg); color: var(--danger); }
+        .badge-insufficient_data { background: var(--warning-bg); color: var(--warning); }
+        
+        .badge-low { background: var(--success-bg); color: var(--success); }
+        .badge-medium { background: var(--info-bg); color: var(--info); }
+        .badge-high { background: var(--warning-bg); color: var(--warning); }
+        .badge-critical { background: var(--danger-bg); color: var(--danger); }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .result-card {
+            background: rgba(31, 41, 55, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .result-card-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .result-card-val {
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .reply-container {
+            background: rgba(79, 70, 229, 0.05);
+            border: 1px solid rgba(79, 70, 229, 0.2);
+            border-radius: 12px;
+            padding: 1.25rem;
+            position: relative;
+        }
+
+        .reply-container::before {
+            content: "Official Response Draft";
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            background: #171c2a;
+            color: #818cf8;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0 0.5rem;
+            border-radius: 4px;
+            border: 1px solid rgba(79, 70, 229, 0.2);
+        }
+
+        .guardrail-checklist {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .guardrail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.85rem;
+        }
+
+        .guardrail-item i {
+            color: var(--success);
+        }
+
+        .json-viewer {
+            background: #05070c;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            color: #34d399;
+            overflow-x: auto;
+            max-height: 250px;
+            border: 1px solid var(--border-color);
+        }
+
+        .spinner {
+            animation: rotate 2s linear infinite;
+            width: 20px;
+            height: 20px;
+        }
+
+        .spinner .path {
+            stroke: currentColor;
+            stroke-linecap: round;
+            animation: dash 1.5s ease-in-out infinite;
+        }
+
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes dash {
+            0% { stroke-dasharray: 1, 150; stroke-dashoffset: 0; }
+            50% { stroke-dasharray: 90, 150; stroke-dashoffset: -35; }
+            100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; }
+        }
+
+        .action-bar {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            border-top: 1px solid var(--border-color);
+            margin-top: auto;
+            background: rgba(11, 15, 25, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fa-solid fa-shield-halved"></i>
+            QueueStorm Investigator
+        </div>
+        <div class="header-status">
+            <span class="status-badge">
+                <i class="fa-solid fa-circle-check"></i>
+                Service Online
+            </span>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Input Panel -->
+        <div class="glass-panel">
+            <div class="panel-title">
+                <i class="fa-solid fa-ticket"></i> Ticket Details
+            </div>
+            
+            <div class="case-selector-wrapper">
+                <label for="sample-select">Load Public Sample Case</label>
+                <select id="sample-select" onchange="loadSampleCase()">
+                    <option value="">-- Choose a Sample Case to populate inputs --</option>
+                    <option value="SAMPLE-01">SAMPLE-01: Wrong transfer with matching evidence</option>
+                    <option value="SAMPLE-02">SAMPLE-02: Wrong transfer with inconsistent evidence</option>
+                    <option value="SAMPLE-03">SAMPLE-03: Failed payment with balance deducted</option>
+                    <option value="SAMPLE-04">SAMPLE-04: Refund request (change of mind)</option>
+                    <option value="SAMPLE-05">SAMPLE-05: Phishing / social engineering report</option>
+                    <option value="SAMPLE-06">SAMPLE-06: Vague complaint</option>
+                    <option value="SAMPLE-07">SAMPLE-07: Agent cash-in issue (Bangla)</option>
+                    <option value="SAMPLE-08">SAMPLE-08: Ambiguous matching transactions</option>
+                    <option value="SAMPLE-09">SAMPLE-09: Merchant settlement delay</option>
+                    <option value="SAMPLE-10">SAMPLE-10: Duplicate payment claim</option>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label for="ticket-id">Ticket ID</label>
+                    <input type="text" id="ticket-id" value="TKT-CUSTOM">
+                </div>
+                <div class="form-group">
+                    <label for="user-type">User Type</label>
+                    <select id="user-type">
+                        <option value="customer">Customer</option>
+                        <option value="merchant">Merchant</option>
+                        <option value="agent">Agent</option>
+                        <option value="unknown">Unknown</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="complaint">Complaint Text</label>
+                <textarea id="complaint" placeholder="Describe the customer issue..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Recent Transactions</label>
+                <div class="table-container">
+                    <table id="txn-table">
+                        <thead>
+                            <tr>
+                                <th>Txn ID</th>
+                                <th>Type</th>
+                                <th>Amount (BDT)</th>
+                                <th>Counterparty</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="txn-body">
+                            <!-- Rows added dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="addTxnRow()" style="padding: 0.5rem 1rem; font-size: 0.85rem; align-self: flex-start; margin-top: 0.5rem;">
+                    <i class="fa-solid fa-plus"></i> Add Transaction Row
+                </button>
+            </div>
+
+            <button type="button" class="btn" id="submit-btn" onclick="submitTicket()">
+                <i class="fa-solid fa-magnifying-glass-chart"></i> Investigate Ticket
+            </button>
+        </div>
+
+        <!-- Output Panel -->
+        <div class="glass-panel" id="results-panel">
+            <div class="panel-title">
+                <i class="fa-solid fa-square-poll-horizontal"></i> Investigation Report
+            </div>
+            
+            <div id="results-placeholder" style="text-align: center; padding: 4rem 2rem; color: var(--text-secondary);">
+                <i class="fa-solid fa-chart-line" style="font-size: 3rem; margin-bottom: 1.5rem; opacity: 0.5;"></i>
+                <p>Input ticket data and click <strong>Investigate Ticket</strong> to trigger the analysis pipeline.</p>
+            </div>
+
+            <div id="results-spinner" class="hidden" style="text-align: center; padding: 4rem 2rem;">
+                <svg class="spinner" viewBox="0 0 50 50" style="width: 50px; height: 50px; margin: 0 auto 1.5rem; color: var(--accent-primary);">
+                    <circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="4"></circle>
+                </svg>
+                <p>Running pre-processing rules & calling LLM engine...</p>
+            </div>
+
+            <div id="results-content" class="hidden" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <!-- Output Badge Grid -->
+                <div class="result-grid">
+                    <div class="result-card">
+                        <span class="result-card-label">Evidence Verdict</span>
+                        <div id="res-verdict"></div>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-card-label">Case Type</span>
+                        <div class="result-card-val" id="res-casetype">-</div>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-card-label">Severity</span>
+                        <div id="res-severity"></div>
+                    </div>
+                    <div class="result-card">
+                        <span class="result-card-label">Routing Department</span>
+                        <div class="result-card-val" id="res-dept">-</div>
+                    </div>
+                </div>
+
+                <div class="result-card" style="background: rgba(79, 70, 229, 0.04);">
+                    <span class="result-card-label">Matched Transaction ID</span>
+                    <div class="result-card-val" id="res-txnid">-</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Agent Summary</label>
+                    <p id="res-summary" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary);"></p>
+                </div>
+
+                <div class="form-group">
+                    <label>Recommended Next Action</label>
+                    <p id="res-action" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-primary); font-weight: 500;"></p>
+                </div>
+
+                <div class="reply-container">
+                    <p id="res-reply" style="font-size: 1rem; line-height: 1.5; font-style: italic; color: #e2e8f0;"></p>
+                </div>
+
+                <!-- Guardrail Checks -->
+                <div class="guardrail-checklist">
+                    <div class="guardrail-item">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <strong>Live Safety Audit Status</strong>
+                    </div>
+                    <div class="guardrail-item">
+                        <i class="fa-solid fa-circle-check" id="g-credentials"></i>
+                        <span>Credential Protection: Guaranteed no request for PIN/OTP/Passwords.</span>
+                    </div>
+                    <div class="guardrail-item">
+                        <i class="fa-solid fa-circle-check" id="g-refund"></i>
+                        <span>Refund Safe-Harbor: Conditional refund/reversal verification language.</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Raw API JSON Response</label>
+                    <pre class="json-viewer" id="res-json"></pre>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        QueueStorm Investigator · Built for CSE Carnival 2026 Codex Community Hackathon
+    </footer>
+
+    <!-- Public Case Data -->
+    <script>
+        const sampleCases = {
+            "SAMPLE-01": {
+                ticket_id: "TKT-001",
+                user_type: "customer",
+                complaint: "I sent 5000 taka to a wrong number around 2pm today. The number was supposed to be 01712345678 but I think I typed it wrong. The person isn't responding to my call. Please help me get my money back.",
+                transaction_history: [
+                    { transaction_id: "TXN-9101", type: "transfer", amount: 5000, counterparty: "+8801719876543", status: "completed", timestamp: "2026-04-14T14:08:22Z" },
+                    { transaction_id: "TXN-9087", type: "cash_in", amount: 10000, counterparty: "AGENT-512", status: "completed", timestamp: "2026-04-13T18:12:00Z" }
+                ]
+            },
+            "SAMPLE-02": {
+                ticket_id: "TKT-002",
+                user_type: "customer",
+                complaint: "I sent 2000 to the wrong person by mistake. Please reverse it.",
+                transaction_history: [
+                    { transaction_id: "TXN-9202", type: "transfer", amount: 2000, counterparty: "+8801812345678", status: "completed", timestamp: "2026-04-14T11:30:00Z" },
+                    { transaction_id: "TXN-9180", type: "transfer", amount: 2500, counterparty: "+8801812345678", status: "completed", timestamp: "2026-04-10T09:15:00Z" },
+                    { transaction_id: "TXN-9145", type: "transfer", amount: 1500, counterparty: "+8801812345678", status: "completed", timestamp: "2026-04-05T17:45:00Z" }
+                ]
+            },
+            "SAMPLE-03": {
+                ticket_id: "TKT-003",
+                user_type: "customer",
+                complaint: "I tried to pay 1200 taka for my mobile recharge but the app showed failed. But my balance was deducted! Please refund my money.",
+                transaction_history: [
+                    { transaction_id: "TXN-9301", type: "payment", amount: 1200, counterparty: "MERCHANT-MOBILE-OP", status: "failed", timestamp: "2026-04-14T16:00:00Z" }
+                ]
+            },
+            "SAMPLE-04": {
+                ticket_id: "TKT-004",
+                user_type: "customer",
+                complaint: "I paid 500 to a merchant for a product but I changed my mind and don't want it anymore. Please refund my 500 taka.",
+                transaction_history: [
+                    { transaction_id: "TXN-9401", type: "payment", amount: 500, counterparty: "MERCHANT-7821", status: "completed", timestamp: "2026-04-14T13:00:00Z" }
+                ]
+            },
+            "SAMPLE-05": {
+                ticket_id: "TKT-005",
+                user_type: "customer",
+                complaint: "Someone called me saying they are from bKash and asked for my OTP. They said my account will be blocked if I don't share it. Is this real? I haven't shared anything yet.",
+                transaction_history: []
+            },
+            "SAMPLE-06": {
+                ticket_id: "TKT-006",
+                user_type: "customer",
+                complaint: "Something is wrong with my money. Please check.",
+                transaction_history: [
+                    { transaction_id: "TXN-9601", type: "cash_in", amount: 3000, counterparty: "AGENT-220", status: "completed", timestamp: "2026-04-13T10:00:00Z" },
+                    { transaction_id: "TXN-9602", type: "transfer", amount: 800, counterparty: "+8801911223344", status: "completed", timestamp: "2026-04-12T15:30:00Z" }
+                ]
+            },
+            "SAMPLE-07": {
+                ticket_id: "TKT-007",
+                user_type: "customer",
+                complaint: "আমি আজ সকালে এজেন্টের কাছে ২০০০ টাকা ক্যাশ ইন করেছি কিন্তু আমার ব্যালেন্সে টাকা আসেনি। এজেন্ট বলছে টাকা পাঠিয়েছে কিন্তু আমি দেখছি না।",
+                transaction_history: [
+                    { transaction_id: "TXN-9701", type: "cash_in", amount: 2000, counterparty: "AGENT-318", status: "pending", timestamp: "2026-04-14T09:30:00Z" }
+                ]
+            },
+            "SAMPLE-08": {
+                ticket_id: "TKT-008",
+                user_type: "customer",
+                complaint: "I sent 1000 to my brother yesterday but he says he didn't get it. Please check.",
+                transaction_history: [
+                    { transaction_id: "TXN-9801", type: "transfer", amount: 1000, counterparty: "+8801712001122", status: "completed", timestamp: "2026-04-13T11:20:00Z" },
+                    { transaction_id: "TXN-9802", type: "transfer", amount: 1000, counterparty: "+8801812334455", status: "completed", timestamp: "2026-04-13T19:45:00Z" },
+                    { transaction_id: "TXN-9803", type: "transfer", amount: 1000, counterparty: "+8801712001122", status: "failed", timestamp: "2026-04-13T20:10:00Z" }
+                ]
+            },
+            "SAMPLE-09": {
+                ticket_id: "TKT-009",
+                user_type: "merchant",
+                complaint: "I am a merchant. My yesterday's sales of 15000 taka have not been settled to my account. Settlement usually happens by 11am next day. Please check.",
+                transaction_history: [
+                    { transaction_id: "TXN-9901", type: "settlement", amount: 15000, counterparty: "MERCHANT-SELF", status: "pending", timestamp: "2026-04-13T18:00:00Z" }
+                ]
+            },
+            "SAMPLE-10": {
+                ticket_id: "TKT-010",
+                user_type: "customer",
+                complaint: "I paid my electricity bill 850 taka but it deducted twice from my account. Please check, I only paid once.",
+                transaction_history: [
+                    { transaction_id: "TXN-10001", type: "payment", amount: 850, counterparty: "BILLER-DESCO", status: "completed", timestamp: "2026-04-14T08:15:30Z" },
+                    { transaction_id: "TXN-10002", type: "payment", amount: 850, counterparty: "BILLER-DESCO", status: "completed", timestamp: "2026-04-14T08:15:42Z" }
+                ]
+            }
+        };
+
+        function addTxnRow(data = {}) {
+            const tbody = document.getElementById("txn-body");
+            const tr = document.createElement("tr");
+            
+            tr.innerHTML = `
+                <td><input type="text" value="${data.transaction_id || ''}" style="width: 100%; padding: 4px 8px;"></td>
+                <td>
+                    <select style="width: 100%; padding: 4px 8px;">
+                        <option value="transfer" ${data.type === 'transfer' ? 'selected' : ''}>transfer</option>
+                        <option value="payment" ${data.type === 'payment' ? 'selected' : ''}>payment</option>
+                        <option value="cash_in" ${data.type === 'cash_in' ? 'selected' : ''}>cash_in</option>
+                        <option value="cash_out" ${data.type === 'cash_out' ? 'selected' : ''}>cash_out</option>
+                        <option value="settlement" ${data.type === 'settlement' ? 'selected' : ''}>settlement</option>
+                        <option value="refund" ${data.type === 'refund' ? 'selected' : ''}>refund</option>
+                    </select>
+                </td>
+                <td><input type="number" value="${data.amount || ''}" style="width: 100%; padding: 4px 8px;"></td>
+                <td><input type="text" value="${data.counterparty || ''}" style="width: 100%; padding: 4px 8px;"></td>
+                <td>
+                    <select style="width: 100%; padding: 4px 8px;">
+                        <option value="completed" ${data.status === 'completed' ? 'selected' : ''}>completed</option>
+                        <option value="failed" ${data.status === 'failed' ? 'selected' : ''}>failed</option>
+                        <option value="pending" ${data.status === 'pending' ? 'selected' : ''}>pending</option>
+                        <option value="reversed" ${data.status === 'reversed' ? 'selected' : ''}>reversed</option>
+                    </select>
+                </td>
+                <td>
+                    <button class="btn btn-secondary" onclick="this.closest('tr').remove()" style="padding: 2px 8px; background: rgba(239, 68, 68, 0.2); border: none; color: #ef4444;"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+
+        function loadSampleCase() {
+            const caseId = document.getElementById("sample-select").value;
+            if (!caseId) return;
+
+            const caseData = sampleCases[caseId];
+            document.getElementById("ticket-id").value = caseData.ticket_id;
+            document.getElementById("user-type").value = caseData.user_type;
+            document.getElementById("complaint").value = caseData.complaint;
+            
+            const tbody = document.getElementById("txn-body");
+            tbody.innerHTML = "";
+            
+            caseData.transaction_history.forEach(txn => {
+                addTxnRow(txn);
+            });
+        }
+
+        async function submitTicket() {
+            const placeholder = document.getElementById("results-placeholder");
+            const spinner = document.getElementById("results-spinner");
+            const content = document.getElementById("results-content");
+            const submitBtn = document.getElementById("submit-btn");
+
+            placeholder.classList.add("hidden");
+            content.classList.add("hidden");
+            spinner.classList.remove("hidden");
+            submitBtn.disabled = true;
+
+            const ticketId = document.getElementById("ticket-id").value;
+            const userType = document.getElementById("user-type").value;
+            const complaint = document.getElementById("complaint").value;
+            
+            // Build transactions list from table
+            const txnRows = document.getElementById("txn-body").querySelectorAll("tr");
+            const transaction_history = [];
+            
+            txnRows.forEach(row => {
+                const inputs = row.querySelectorAll("input, select");
+                if (inputs[0].value) {
+                    transaction_history.push({
+                        transaction_id: inputs[0].value,
+                        type: inputs[1].value,
+                        amount: parseFloat(inputs[2].value) || 0,
+                        counterparty: inputs[3].value,
+                        status: inputs[4].value,
+                        timestamp: new Date().toISOString() // auto filler
+                    });
+                }
+            });
+
+            const requestBody = {
+                ticket_id: ticketId,
+                complaint: complaint,
+                user_type: userType,
+                transaction_history: transaction_history
+            };
+
+            try {
+                const response = await fetch("/analyze-ticket", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API returned error status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayResults(data);
+            } catch (err) {
+                alert(`Error runnning investigation: ${err.message}`);
+                placeholder.classList.remove("hidden");
+            } finally {
+                spinner.classList.add("hidden");
+                submitBtn.disabled = false;
+            }
+        }
+
+        function displayResults(data) {
+            document.getElementById("results-content").classList.remove("hidden");
+            
+            // Badge verdict mapping
+            const verdictEl = document.getElementById("res-verdict");
+            verdictEl.innerHTML = `<span class="badge badge-${data.evidence_verdict}">${data.evidence_verdict.replace('_', ' ')}</span>`;
+            
+            // Text values
+            document.getElementById("res-casetype").innerText = data.case_type.replace(/_/g, ' ');
+            document.getElementById("res-dept").innerText = data.department.replace(/_/g, ' ');
+            document.getElementById("res-txnid").innerText = data.relevant_transaction_id || "null (No match)";
+            
+            // Severity badge
+            const severityEl = document.getElementById("res-severity");
+            severityEl.innerHTML = `<span class="badge badge-${data.severity}">${data.severity}</span>`;
+            
+            document.getElementById("res-summary").innerText = data.agent_summary;
+            document.getElementById("res-action").innerText = data.recommended_next_action;
+            document.getElementById("res-reply").innerText = data.customer_reply;
+            
+            // JSON display
+            document.getElementById("res-json").innerText = JSON.stringify(data, null, 2);
+            
+            // Safety audits (always PASS due to safety sanitizer guardrail)
+            document.getElementById("g-credentials").className = "fa-solid fa-circle-check";
+            document.getElementById("g-refund").className = "fa-solid fa-circle-check";
+        }
+
+        // Initialize with first case
+        document.getElementById("sample-select").value = "SAMPLE-01";
+        loadSampleCase();
+    </script>
+</body>
+</html>

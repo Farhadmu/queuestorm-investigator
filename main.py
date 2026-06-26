@@ -1,12 +1,21 @@
 import logging
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
+import os
 
 from models import TicketRequest, AnalysisResponse
 from analyzer import analyze_ticket
 
 app = FastAPI(title="QueueStorm Investigator API")
+
+@app.get("/", response_class=HTMLResponse)
+async def serve_dashboard():
+    index_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "index.html")
+    if not os.path.exists(index_path):
+        return HTMLResponse("<h1>QueueStorm Dashboard Not Found</h1>", status_code=404)
+    with open(index_path, "r", encoding="utf-8") as f:
+        return HTMLResponse(f.read())
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
