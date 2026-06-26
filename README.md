@@ -1,5 +1,7 @@
 # QueueStorm Investigator
 
+**Live API URL**: `https://queuestorm-investigator-kb4v.onrender.com`
+
 QueueStorm Investigator is a high-performance, AI-driven copilot API service for digital finance support agents. It analyzes incoming customer complaints alongside transaction history to determine evidence consistency, identify the relevant transaction, classify the issue type, assign severity, route it to the appropriate department, and draft a secure, safety-compliant customer response in the correct language (English/Bangla/Banglish).
 
 ## Tech Stack
