@@ -63,6 +63,7 @@
             background: rgba(11, 15, 25, 0.8);
             backdrop-filter: blur(12px);
             z-index: 10;
+            transition: all 0.3s ease;
         }
 
         .logo {
@@ -128,7 +129,7 @@
             justify-content: center;
             align-items: center;
             flex-grow: 1;
-            padding: 2rem;
+            padding: 2rem 1rem;
         }
 
         .login-card {
@@ -143,6 +144,7 @@
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
+            transition: all 0.3s ease;
         }
 
         .login-header {
@@ -205,11 +207,13 @@
             width: 100%;
             margin: 0 auto;
             flex-grow: 1;
+            transition: all 0.3s ease;
         }
 
         @media (max-width: 1024px) {
             .main-container {
                 grid-template-columns: 1fr;
+                gap: 1.5rem;
             }
         }
 
@@ -223,6 +227,7 @@
             display: flex;
             flex-direction: column;
             gap: 1.5rem;
+            transition: all 0.3s ease;
         }
 
         .panel-title {
@@ -260,6 +265,7 @@
             font-size: 0.95rem;
             outline: none;
             transition: all 0.2s ease;
+            width: 100%;
         }
 
         select:focus, input:focus, textarea:focus {
@@ -285,14 +291,17 @@
         .table-container {
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            overflow: hidden;
+            overflow-x: auto;
             background: rgba(17, 24, 39, 0.3);
+            width: 100%;
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.85rem;
+            min-width: 650px; /* Forces scrollbar instead of squeezing inputs on narrow viewports */
         }
 
         th, td {
@@ -322,6 +331,7 @@
             gap: 0.5rem;
             transition: all 0.2s ease;
             box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            width: 100%;
         }
 
         .btn:hover {
@@ -337,6 +347,7 @@
             background: rgba(31, 41, 55, 0.8);
             border: 1px solid var(--border-color);
             box-shadow: none;
+            width: auto;
         }
 
         .btn-secondary:hover {
@@ -390,6 +401,8 @@
         .result-card-val {
             font-size: 1.05rem;
             font-weight: 600;
+            overflow-wrap: break-word;
+            word-break: break-all;
         }
 
         .reply-container {
@@ -398,6 +411,7 @@
             border-radius: 12px;
             padding: 1.25rem;
             position: relative;
+            margin-top: 0.5rem;
         }
 
         .reply-container::before {
@@ -426,13 +440,15 @@
 
         .guardrail-item {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 0.6rem;
             font-size: 0.85rem;
+            line-height: 1.4;
         }
 
         .guardrail-item i {
             color: var(--success);
+            margin-top: 2px;
         }
 
         .json-viewer {
@@ -473,14 +489,65 @@
             display: none !important;
         }
 
-        footer {
-            text-align: center;
-            padding: 1.5rem;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            border-top: 1px solid var(--border-color);
-            margin-top: auto;
-            background: rgba(11, 15, 25, 0.8);
+        /* -------------------------------------------
+           MOBILE & TABLET RESPONSIVE MEDIA QUERIES
+           ------------------------------------------- */
+        @media (max-width: 640px) {
+            header {
+                flex-direction: column;
+                gap: 1.25rem;
+                padding: 1.25rem 1rem;
+                text-align: center;
+            }
+
+            .header-status {
+                width: 100%;
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            .status-badge, .logout-btn {
+                width: 100%;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .login-card {
+                padding: 1.5rem;
+                border-radius: 16px;
+            }
+
+            .main-container {
+                padding: 1rem;
+                gap: 1rem;
+            }
+
+            .glass-panel {
+                padding: 1.25rem;
+                border-radius: 12px;
+                gap: 1.25rem;
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .result-card-val {
+                font-size: 0.95rem;
+            }
+
+            .reply-container {
+                padding: 1rem;
+            }
+
+            .panel-title {
+                font-size: 1.15rem;
+            }
+
+            .case-selector-wrapper {
+                padding: 0.75rem;
+            }
         }
     </style>
 </head>
@@ -716,7 +783,6 @@
                 loginView.classList.add("hidden");
                 dashboardView.classList.remove("hidden");
                 logoutBtn.classList.remove("hidden");
-                // Pre-populate with Case 1
                 if (document.getElementById("txn-body").children.length === 0) {
                     document.getElementById("sample-select").value = "SAMPLE-01";
                     loadSampleCase();
@@ -734,7 +800,6 @@
             const passwordInput = document.getElementById("password").value;
             const errorMsg = document.getElementById("login-error");
 
-            // Simple demo validation (Username: judge, Password: cse-carnival-2026)
             if (usernameInput === "judge" && passwordInput === "cse-carnival-2026") {
                 localStorage.setItem("queuestorm_auth", "true");
                 errorMsg.classList.add("hidden");
